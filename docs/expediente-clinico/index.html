@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <title>Visor Expediente Clínico y Existencias</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="brand-mark"><img src="logo.ico" alt="Logo Macroxel"><div><span>MACROXEL</span><strong>Visor clínico</strong></div></div>
+      <p class="eyebrow">Acceso profesional protegido</p>
+      <h1 id="login-title">Expediente clínico y existencias</h1>
+      <p id="login-farmacia" class="login-farmacia">Cargando configuración de la farmacia…</p>
+      <form id="login-form" class="stack" autocomplete="on">
+        <label>Correo autorizado<input id="login-email" type="email" autocomplete="username" required placeholder="medico@correo.com"></label>
+        <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" required minlength="6" placeholder="Contraseña de Firebase Auth"></label>
+        <button class="btn primary wide" type="submit">Ingresar al visor</button>
+      </form>
+      <p id="login-message" class="message" role="status">La contraseña se usa únicamente para iniciar sesión y no se guarda en este visor.</p>
+    </section>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <img src="logo.ico" alt="Logo Macroxel">
+        <div><small>VISOR EXPEDIENTE CLÍNICO Y EXISTENCIAS</small><h1 id="farmacia-name">Farmacia</h1></div>
+      </div>
+      <div class="top-actions">
+        <span id="sync-badge" class="badge ok">● Conectado</span>
+        <span id="backup-badge" class="badge warn">Respaldo local pendiente</span>
+        <button id="btn-backup-folder" class="btn ghost" type="button">Carpeta de respaldos</button>
+        <button id="btn-logout" class="btn dark" type="button">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <nav class="nav" aria-label="Módulos">
+      <button class="nav-btn active" data-view="dashboard" type="button">Resumen</button>
+      <button class="nav-btn" data-view="records" type="button">Expedientes</button>
+      <button class="nav-btn" data-view="consultation" type="button">Nueva consulta</button>
+      <button class="nav-btn" data-view="inventory" type="button">Inventario</button>
+      <button class="nav-btn" data-view="references" type="button">Referencias</button>
+    </nav>
+
+    <main>
+      <section id="view-dashboard" class="view active">
+        <div class="page-head"><div><p class="eyebrow">Panel clínico</p><h2>Resumen operativo</h2><p>Expedientes recientes, continuidad clínica y disponibilidad de productos.</p></div><button class="btn primary" data-open-view="consultation" type="button">+ Nueva consulta</button></div>
+        <div class="kpi-grid">
+          <article class="kpi"><span>Pacientes recientes</span><strong id="kpi-patients">0</strong><small>Últimos registros consultados</small></article>
+          <article class="kpi"><span>Consultas del día</span><strong id="kpi-today">0</strong><small>Notas médicas registradas</small></article>
+          <article class="kpi"><span>Productos destacados</span><strong id="kpi-products">0</strong><small>Más utilizados por la farmacia</small></article>
+          <article class="kpi"><span>Última sincronización</span><strong id="kpi-sync">—</strong><small>Inventario del sistema principal</small></article>
+        </div>
+        <div class="two-cols">
+          <article class="panel"><div class="panel-head"><div><h3>Pacientes recientes</h3><p>Acceso rápido a los últimos expedientes.</p></div><button class="link-btn" data-open-view="records" type="button">Ver expedientes</button></div><div id="recent-patients" class="list"><div class="empty">Sin pacientes cargados.</div></div></article>
+          <article class="panel"><div class="panel-head"><div><h3>Productos más utilizados</h3><p>Solo se descargan 20 productos al abrir el visor.</p></div><button class="link-btn" data-open-view="inventory" type="button">Consultar inventario</button></div><div id="dashboard-products" class="compact-products"><div class="empty">Sin inventario sincronizado.</div></div></article>
+        </div>
+        <aside class="compliance-note"><strong>Uso responsable</strong><span>Este visor apoya la integración documental. La valoración, diagnóstico, prescripción, firma y cumplimiento normativo corresponden al profesional de la salud y al establecimiento.</span></aside>
+      </section>
+
+      <section id="view-records" class="view">
+        <div class="page-head"><div><p class="eyebrow">Expedientes</p><h2>Pacientes y continuidad clínica</h2><p>Busca por nombre, teléfono o identificador. Se muestran como máximo 20 coincidencias.</p></div><button id="btn-new-patient" class="btn primary" type="button">+ Nuevo paciente</button></div>
+        <div class="search-row"><input id="patient-search" type="search" placeholder="Nombre, teléfono o ID del paciente" autocomplete="off"><button id="btn-search-patient" class="btn dark" type="button">Buscar</button></div>
+        <div class="records-layout">
+          <aside class="panel records-list"><div id="patient-results" class="list"><div class="empty">Escribe al menos tres caracteres para buscar.</div></div></aside>
+          <article id="patient-detail" class="panel patient-detail"><div class="empty hero-empty"><b>Selecciona un paciente</b><span>Consulta sus datos, notas médicas y referencias sin descargar expedientes ajenos.</span></div></article>
+        </div>
+      </section>
+
+      <section id="view-consultation" class="view">
+        <div class="page-head"><div><p class="eyebrow">Atención ambulatoria</p><h2>Nueva nota médica</h2><p>La nota queda fechada, identificada y bloqueada contra sobrescritura.</p></div><span class="badge info">NOM-004 · Nota de evolución</span></div>
+        <form id="consultation-form" class="clinical-form">
+          <fieldset><legend>Paciente y profesional</legend><div class="form-grid cols-3">
+            <label class="span-2">Paciente seleccionado<input id="consult-patient-label" readonly required placeholder="Selecciona un paciente desde Expedientes"></label><button id="btn-pick-patient" class="btn ghost align-end" type="button">Seleccionar paciente</button>
+            <label>Fecha y hora<input id="consult-datetime" type="datetime-local" required></label><label>Nombre completo del médico<input id="doctor-name" required maxlength="160"></label><label>Cédula profesional<input id="doctor-license" required maxlength="40"></label>
+            <label>Especialidad / servicio<input id="doctor-specialty" maxlength="100" placeholder="Medicina general"></label><label>Tipo de nota<select id="note-type"><option>EVOLUCIÓN</option><option>PRIMERA VEZ</option><option>CORRECCIÓN / ACLARACIÓN</option><option>INTERCONSULTA</option></select></label><label>Folio interno<input id="consult-folio" readonly></label>
+          </div></fieldset>
+          <fieldset><legend>Signos vitales y somatometría</legend><div class="form-grid cols-6">
+            <label>TA sistólica<input id="vital-sys" type="number" min="30" max="300" inputmode="decimal"></label><label>TA diastólica<input id="vital-dia" type="number" min="20" max="200" inputmode="decimal"></label><label>FC lpm<input id="vital-hr" type="number" min="20" max="260"></label><label>FR rpm<input id="vital-rr" type="number" min="5" max="80"></label><label>Temp. °C<input id="vital-temp" type="number" min="25" max="45" step="0.1"></label><label>SpO₂ %<input id="vital-spo2" type="number" min="40" max="100"></label>
+            <label>Peso kg<input id="vital-weight" type="number" min="0.2" max="500" step="0.1"></label><label>Talla cm<input id="vital-height" type="number" min="20" max="260" step="0.1"></label><label>IMC<input id="vital-bmi" readonly></label><label>Glucosa mg/dL<input id="vital-glucose" type="number" min="10" max="1000"></label><label class="span-2">Dolor (0–10) y localización<input id="vital-pain" maxlength="100"></label>
+          </div></fieldset>
+          <fieldset><legend>Nota clínica</legend><div class="form-grid cols-2">
+            <label class="span-2">Motivo de consulta<textarea id="consult-reason" required maxlength="1500"></textarea></label>
+            <label>Interrogatorio y evolución del cuadro<textarea id="consult-subjective" required maxlength="5000"></textarea></label><label>Exploración física y estado mental, cuando aplique<textarea id="consult-objective" required maxlength="5000"></textarea></label>
+            <label>Resultados relevantes de estudios<textarea id="consult-results" maxlength="3000" placeholder="Estudio, fecha y resultado relevante"></textarea></label><label>Diagnósticos o problemas clínicos<textarea id="consult-diagnosis" required maxlength="2500"></textarea></label>
+            <label>Pronóstico<textarea id="consult-prognosis" required maxlength="1500"></textarea></label><label>Plan, tratamiento e indicaciones<textarea id="consult-treatment" required maxlength="5000" placeholder="Medicamento, dosis, vía, periodicidad y duración; medidas no farmacológicas"></textarea></label>
+            <label class="span-2">Seguimiento y signos de alarma<textarea id="consult-followup" required maxlength="2500"></textarea></label>
+          </div></fieldset>
+          <label class="confirm"><input id="consult-confirm" type="checkbox" required><span>Confirmo que revisé la nota. Al guardar quedará como registro histórico inmutable; una corrección deberá asentarse mediante una nota nueva.</span></label>
+          <div class="form-actions"><button id="btn-save-consultation" class="btn primary" type="submit">Guardar nota médica</button><button class="btn ghost" type="reset">Limpiar captura</button></div>
+        </form>
+      </section>
+
+      <section id="view-inventory" class="view">
+        <div class="page-head"><div><p class="eyebrow">Existencias</p><h2>Inventario para consulta médica</h2><p>La apertura descarga únicamente los 20 productos más utilizados. Las búsquedas consultan Firebase bajo demanda.</p></div><button id="btn-export-inventory" class="btn ghost" type="button">Exportar resultados a Excel</button></div>
+        <div class="search-row"><input id="inventory-search" type="search" placeholder="Código de barras o denominación genérica" autocomplete="off"><button id="btn-search-inventory" class="btn dark" type="button">Buscar en el sistema principal</button></div>
+        <div class="panel"><div class="panel-head"><div><h3 id="inventory-title">20 productos más utilizados</h3><p id="inventory-meta">Esperando sincronización del punto de venta.</p></div></div><div id="inventory-results" class="inventory-grid"><div class="empty">Sin inventario sincronizado.</div></div></div>
+      </section>
+
+      <section id="view-references" class="view">
+        <div class="page-head"><div><p class="eyebrow">Continuidad y cumplimiento</p><h2>Referencias médicas y normativas</h2><p>Genera una referencia clínica y consulta las fuentes oficiales usadas para diseñar el visor.</p></div><span class="badge info">Información oficial</span></div>
+        <div class="two-cols refs-layout">
+          <form id="reference-form" class="panel clinical-form compact">
+            <div class="panel-head"><div><h3>Nueva referencia / traslado</h3><p>Documento asociado al expediente seleccionado.</p></div></div>
+            <div class="form-grid cols-2">
+              <label class="span-2">Paciente<input id="reference-patient-label" readonly required placeholder="Selecciona un paciente desde Expedientes"></label>
+              <label>Fecha y hora<input id="reference-datetime" type="datetime-local" required></label><label>Urgencia<select id="reference-priority"><option>ORDINARIA</option><option>PREFERENTE</option><option>URGENTE</option></select></label>
+              <label class="span-2">Establecimiento o profesional receptor<input id="reference-recipient" required maxlength="200"></label>
+              <label class="span-2">Motivo de envío<textarea id="reference-reason" required maxlength="2500"></textarea></label>
+              <label>Impresión diagnóstica<textarea id="reference-diagnosis" required maxlength="2500"></textarea></label><label>Estudios y resultados relevantes<textarea id="reference-results" maxlength="2500"></textarea></label>
+              <label>Tratamiento otorgado<textarea id="reference-treatment" required maxlength="2500"></textarea></label><label>Nombre y cédula del médico remitente<textarea id="reference-doctor" required maxlength="220"></textarea></label>
+            </div>
+            <label class="confirm"><input id="reference-confirm" type="checkbox" required><span>Confirmo que revisé la referencia y que corresponde al paciente seleccionado.</span></label>
+            <button class="btn primary" type="submit">Guardar referencia</button>
+          </form>
+          <div class="panel official-sources">
+            <div class="panel-head"><div><h3>Referencias oficiales</h3><p>Consulta siempre las versiones vigentes y los criterios aplicables al establecimiento.</p></div></div>
+            <a href="https://dof.gob.mx/nota_detalle_popup.php?codigo=5272787" target="_blank" rel="noopener noreferrer"><strong>NOM-004-SSA3-2012</strong><span>Integración, uso, conservación y confidencialidad del expediente clínico.</span></a>
+            <a href="https://dof.gob.mx/nota_detalle.php?codigo=5280847" target="_blank" rel="noopener noreferrer"><strong>NOM-024-SSA3-2012</strong><span>Sistemas de información de registro electrónico para la salud e interoperabilidad.</span></a>
+            <a href="https://www.diputados.gob.mx/LeyesBiblio/pdf_mov/Ley_Federal_de_Proteccion_de_Datos_Personales-Posesion-Particulares.pdf" target="_blank" rel="noopener noreferrer"><strong>Ley Federal de Protección de Datos Personales</strong><span>Datos sensibles, consentimiento, aviso de privacidad, seguridad y derechos ARCO.</span></a>
+            <a href="https://dof.gob.mx/normasOficiales/8305/salud11_C/salud11_C.html" target="_blank" rel="noopener noreferrer"><strong>NOM-005-SSA3-2018</strong><span>Requisitos mínimos para establecimientos de atención médica ambulatoria.</span></a>
+            <div class="retention"><b>Conservación mínima</b><span>El expediente debe conservarse al menos cinco años desde el último acto médico, sin perjuicio de plazos mayores que resulten aplicables.</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="patient-dialog">
+    <form id="patient-form" class="dialog-card">
+      <div class="dialog-head"><div><p class="eyebrow">Expediente único</p><h2>Nuevo paciente</h2></div><button class="icon-btn" type="button" data-close-dialog aria-label="Cerrar">×</button></div>
+      <div class="form-grid cols-3">
+        <label class="span-2">Nombre completo<input id="patient-name" required maxlength="180"></label><label>Fecha de nacimiento<input id="patient-birth" type="date" required></label>
+        <label>Sexo<select id="patient-sex" required><option value="">Selecciona</option><option>FEMENINO</option><option>MASCULINO</option><option>INTERSEXUAL</option><option>NO ESPECIFICADO</option></select></label><label>Teléfono<input id="patient-phone" type="tel" maxlength="30"></label><label>Correo<input id="patient-email" type="email" maxlength="160"></label>
+        <label class="span-2">Domicilio<input id="patient-address" required maxlength="300"></label><label>Contacto de emergencia<input id="patient-emergency" maxlength="220"></label>
+        <label>Grupo sanguíneo<input id="patient-blood" maxlength="20"></label><label>Alergias<textarea id="patient-allergies" required maxlength="1500" placeholder="Escribe NEGADAS si fueron interrogadas y no refiere"></textarea></label><label>Padecimientos crónicos<textarea id="patient-chronic" required maxlength="1500" placeholder="Escribe NEGADOS cuando corresponda"></textarea></label>
+        <label>Antecedentes heredofamiliares<textarea id="patient-family-history" maxlength="2000"></textarea></label><label>Antecedentes personales patológicos<textarea id="patient-pathological" maxlength="2500"></textarea></label><label>Antecedentes personales no patológicos<textarea id="patient-nonpathological" maxlength="2500"></textarea></label>
+        <label class="span-3">Observaciones y otros antecedentes<textarea id="patient-notes" maxlength="2500"></textarea></label>
+      </div>
+      <label class="confirm"><input id="patient-consent" type="checkbox" required><span>El paciente o su representante recibió el aviso de privacidad y otorgó el consentimiento aplicable para tratar datos personales sensibles de salud.</span></label>
+      <div class="form-actions"><button class="btn primary" type="submit">Crear expediente</button><button class="btn ghost" type="button" data-close-dialog>Cancelar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="patient-picker-dialog"><section class="dialog-card picker"><div class="dialog-head"><div><p class="eyebrow">Selección</p><h2>Elegir paciente</h2></div><button class="icon-btn" type="button" data-close-dialog>×</button></div><div class="search-row"><input id="picker-search" type="search" placeholder="Nombre, teléfono o ID"><button id="btn-picker-search" class="btn dark" type="button">Buscar</button></div><div id="picker-results" class="list"><div class="empty">Busca al paciente para continuar.</div></div></section></dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js" defer></script>
+</body>
+</html>

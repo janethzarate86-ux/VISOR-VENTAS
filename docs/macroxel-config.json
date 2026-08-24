@@ -1,0 +1,17 @@
+{
+  "version": 4,
+  "source": "Macroxel FarmaControl",
+  "purpose": "central-viewers",
+  "firebaseUrl": "https://ventasfarmacia-y-paginagithub-default-rtdb.firebaseio.com",
+  "firebaseDatabaseUrl": "https://ventasfarmacia-y-paginagithub-default-rtdb.firebaseio.com",
+  "firebaseApiKey": "AIzaSyAxmCfnLy-5aiLTfLZbTqDGOEvm68q9Heo",
+  "tiendaId": "FARMACIA_FARMABIEN_GARDENIAS",
+  "storeId": "FARMACIA_FARMABIEN_GARDENIAS",
+  "pharmacyName": "FARMACIA FARMABIEN GARDENIAS",
+  "modules": [
+    "sales-reports",
+    "clinical-records"
+  ],
+  "inventoryMode": "top-20-and-search-on-demand",
+  "updatedAt": "2026-08-24T03:20:53.669Z"
+}
