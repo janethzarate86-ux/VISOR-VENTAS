@@ -1,9 +1,0 @@
-{
-  "version": 3,
-  "source": "Macroxel FarmaControl",
-  "purpose": "sales-reports",
-  "firebaseUrl": "https://ventasfarmacia-y-paginagithub-default-rtdb.firebaseio.com",
-  "githubReportsUrl": "https://janethzarate86-ux.github.io/VISOR-VENTAS/",
-  "tiendaId": "FARMACIA_FARMABIEN_GARDENIAS",
-  "updatedAt": "2026-08-24T02:17:09.853Z"
-}
